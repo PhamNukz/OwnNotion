@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TransKartz | Tour & Transfer de Élite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:      #030305;
+      --bg2:     #07070e;
+      --bg3:     #0c0b18;
+      --org:     #f5a623;
+      --org10:   rgba(245,166,35,0.10);
+      --org20:   rgba(245,166,35,0.20);
+      --navy:    #1a4a8a;
+      --n10:     rgba(26,74,138,0.10);
+      --white:   #fff8ee;
+      --muted:   #5a6070;
+      --border:  rgba(245,166,35,0.10);
+    }
+
+    html { scroll-behavior: smooth; cursor: none; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 400;
+      overflow-x: hidden;
+    }
+
+    /* ─── CUSTOM CURSOR ─────────────────────────── */
+    #c-dot {
+      position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--org);
+      box-shadow: 0 0 12px var(--org), 0 0 24px var(--org);
+      transform: translate(-50%,-50%);
+      transition: width .25s, height .25s;
+    }
+    #c-ring {
+      position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9998;
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 1.5px solid rgba(245,166,35,0.45);
+      transform: translate(-50%,-50%);
+      transition: width .3s, height .3s, border-color .3s;
+    }
+    body.hov #c-dot { width: 14px; height: 14px; }
+    body.hov #c-ring { width: 52px; height: 52px; border-color: var(--org); }
+
+    /* ─── SCANLINES ─────────────────────────────── */
+    body::after {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 2;
+      background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.018) 2px,rgba(0,0,0,.018) 4px);
+    }
+
+    /* ─── NAVBAR ─────────────────────────────────── */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      padding: 1.75rem 5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: padding .4s, background .4s, border-bottom .4s;
+    }
+    #nav.stuck {
+      padding: 1rem 5rem;
+      background: rgba(3,3,5,.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.25rem; font-weight: 900; letter-spacing: .15em;
+      color: var(--white); text-decoration: none;
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .nav-logo .logo-trans { color: var(--org); }
+    .logo-diamond {
+      width: 28px; height: 28px;
+      background: var(--org);
+      clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+      display: inline-block;
+    }
+    .nav-sub {
+      font-size: .5rem; font-weight: 700; letter-spacing: .35em;
+      color: var(--org); text-transform: uppercase; display: block; margin-top: 2px;
+    }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      font-family: 'Rajdhani', sans-serif; font-weight: 600;
+      font-size: .88rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+      position: relative; transition: color .3s;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1px; background: var(--org);
+      transition: width .35s ease;
+    }
+    .nav-links a:hover { color: var(--org); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-cta {
+      font-family: 'Orbitron', sans-serif; font-size: .7rem;
+      font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+      color: #030305; background: var(--org);
+      padding: .7rem 1.75rem; text-decoration: none; cursor: none;
+      clip-path: polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
+      transition: box-shadow .3s, background .3s;
+    }
+    .nav-cta:hover {
+      background: var(--white);
+      box-shadow: 0 0 28px rgba(245,166,35,.5), 0 0 60px rgba(245,166,35,.2);
+    }
+
+    /* ─── HERO ───────────────────────────────────── */
+    #hero {
+      position: relative; height: 100vh; min-height: 680px;
+      display: flex; align-items: center; overflow: hidden;
+    }
+    .h-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(245,166,35,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,166,35,.03) 1px, transparent 1px);
+      background-size: 64px 64px;
+      animation: gridDrift 24s linear infinite;
+    }
+    @keyframes gridDrift { from { transform: translateY(0); } to { transform: translateY(64px); } }
+
+    .h-glow {
+      position: absolute; border-radius: 50%; pointer-events: none;
+    }
+    .h-glow-1 {
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(245,166,35,.1) 0%, transparent 70%);
+      top: 50%; left: 42%; transform: translate(-50%,-50%);
+      animation: orbPulse 5s ease-in-out infinite;
+    }
+    .h-glow-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(26,74,138,.18) 0%, transparent 70%);
+      top: 15%; right: 8%;
+      animation: orbPulse2 7s ease-in-out infinite;
+    }
+    @keyframes orbPulse  { 0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1);} 50%{opacity:.6;transform:translate(-50%,-50%) scale(1.18);} }
+    @keyframes orbPulse2 { 0%,100%{opacity:1;scale:1;} 50%{opacity:.5;scale:1.15;} }
+
+    #particles { position: absolute; inset: 0; overflow: hidden; }
+    .pt {
+      position: absolute; border-radius: 50%; background: var(--org);
+      animation: ptFloat linear infinite;
+    }
+    @keyframes ptFloat {
+      0%   { transform: translateY(105vh); opacity: 0; }
+      5%   { opacity: 1; }
+      90%  { opacity: .8; }
+      100% { transform: translateY(-8vh); opacity: 0; }
+    }
+
+    #h-lines { position: absolute; inset: 0; overflow: hidden; }
+    .h-line {
+      position: absolute; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--org) 50%, transparent 100%);
+      opacity: .2;
+      animation: lineScan linear infinite;
+    }
+    @keyframes lineScan {
+      from { transform: translateX(-120%) rotate(-12deg); }
+      to   { transform: translateX(220%) rotate(-12deg); }
+    }
+
+    .h-content {
+      position: relative; z-index: 10;
+      padding: 0 5rem; max-width: 1440px; margin: 0 auto; width: 100%;
+    }
+    .h-badge {
+      display: inline-flex; align-items: center; gap: .6rem;
+      font-family: 'Orbitron', sans-serif; font-size: .65rem;
+      font-weight: 600; letter-spacing: .35em; text-transform: uppercase;
+      color: var(--org); border: 1px solid var(--border);
+      background: rgba(245,166,35,.04); padding: .5rem 1rem;
+      margin-bottom: 2rem;
+      animation: riseIn .8s ease .2s both;
+    }
+    .h-badge::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--org); animation: blink 1.6s ease infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+    .h-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(3.2rem, 8vw, 7.5rem);
+      font-weight: 900; line-height: .92; letter-spacing: -.02em;
+      margin-bottom: 1.75rem;
+      animation: riseIn .8s ease .4s both;
+    }
+    .h-title .t1 { color: var(--white); display: block; }
+    .h-title .t2 {
+      display: block; color: transparent;
+      -webkit-text-stroke: 1px rgba(255,248,238,.22);
+    }
+    .h-title .t3 {
+      display: block;
+      background: linear-gradient(90deg, var(--org), #ff8c00);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .h-sub {
+      font-size: 1.1rem; font-weight: 400; color: var(--muted);
+      max-width: 470px; line-height: 1.7; margin-bottom: 3rem;
+      animation: riseIn .8s ease .6s both;
+    }
+    .h-sub strong { color: var(--white); font-weight: 600; }
+
+    .h-btns { display: flex; gap: 1.25rem; animation: riseIn .8s ease .8s both; }
+
+    .btn-p, .btn-s {
+      font-family: 'Orbitron', sans-serif; font-size: .72rem;
+      font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+      padding: 1rem 2.5rem; cursor: none; text-decoration: none;
+      clip-path: polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+      position: relative; overflow: hidden;
+      transition: box-shadow .3s;
+    }
+    .btn-p {
+      color: #030305;
+      background: linear-gradient(90deg, var(--org), #e07b00);
+    }
+    .btn-p::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, #e07b00, var(--org));
+      opacity: 0; transition: opacity .3s;
+    }
+    .btn-p:hover { box-shadow: 0 0 40px rgba(245,166,35,.5), 0 0 80px rgba(245,166,35,.2); }
+    .btn-p:hover::before { opacity: 1; }
+    .btn-p span { position: relative; z-index: 1; }
+
+    .btn-s {
+      color: var(--white); background: transparent;
+      border: 1px solid var(--border);
+      transition: border-color .3s, color .3s, background .3s;
+    }
+    .btn-s:hover { border-color: var(--org); color: var(--org); background: var(--org10); }
+
+    /* Hero visual */
+    .h-visual {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 46%;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 5; pointer-events: none;
+    }
+    .h-frame {
+      width: 88%; height: 64%;
+      border: 1px solid var(--border); background: var(--bg2);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1rem;
+    }
+    .h-frame::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(245,166,35,.025), rgba(26,74,138,.04));
+    }
+    .h-frame::after {
+      content: ''; position: absolute; inset: -1px;
+      background: conic-gradient(var(--org) 0deg, transparent 80deg, transparent 180deg, var(--navy) 260deg, transparent 360deg);
+      border-radius: inherit;
+      animation: borderSpin 6s linear infinite;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      padding: 1px;
+    }
+    @keyframes borderSpin { to { transform: rotate(360deg); } }
+
+    .fc { position: absolute; width: 16px; height: 16px; }
+    .fc.tl { top: -1px; left: -1px;  border-top: 2px solid var(--org); border-left: 2px solid var(--org); }
+    .fc.tr { top: -1px; right: -1px; border-top: 2px solid var(--org); border-right: 2px solid var(--org); }
+    .fc.bl { bottom: -1px; left: -1px;  border-bottom: 2px solid var(--org); border-left: 2px solid var(--org); }
+    .fc.br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--org); border-right: 2px solid var(--org); }
+
+    .ph-icon {
+      width: 56px; height: 56px;
+      border: 1px dashed rgba(245,166,35,.3);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; z-index: 1;
+    }
+    .ph-icon svg { width: 28px; height: 28px; stroke: rgba(245,166,35,.45); fill: none; stroke-width: 1.5; }
+    .ph-label {
+      font-family: 'Orbitron', sans-serif; font-size: .6rem;
+      letter-spacing: .25em; color: rgba(245,166,35,.35); text-transform: uppercase;
+      position: relative; z-index: 1;
+    }
+    .ph-sub {
+      font-size: .68rem; font-weight: 300; color: rgba(90,96,112,.5);
+      position: relative; z-index: 1;
+    }
+
+    /* Hero stats */
+    .h-stats {
+      position: absolute; bottom: 3.5rem; left: 5rem; z-index: 10;
+      display: flex; gap: 3rem; align-items: center;
+      animation: riseIn .8s ease 1s both;
+    }
+    .stat-n {
+      font-family: 'Orbitron', sans-serif; font-size: 2.2rem; font-weight: 700;
+      color: var(--white); line-height: 1;
+    }
+    .stat-n em { color: var(--org); font-style: normal; }
+    .stat-l { font-size: .75rem; font-weight: 500; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: .3rem; }
+    .stat-div { width: 1px; height: 48px; background: var(--border); }
+
+    .scroll-cue {
+      position: absolute; bottom: 3.5rem; right: 5rem; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; gap: .6rem;
+      animation: riseIn .8s ease 1.2s both;
+    }
+    .sc-txt {
+      font-family: 'Orbitron', sans-serif; font-size: .55rem; letter-spacing: .35em;
+      color: var(--muted); text-transform: uppercase; writing-mode: vertical-rl;
+    }
+    .sc-line {
+      width: 1px; height: 64px;
+      background: linear-gradient(to bottom, var(--org), transparent);
+      animation: scPulse 2.2s ease infinite;
+    }
+    @keyframes scPulse {
+      0%   { transform: scaleY(0); transform-origin: top; }
+      50%  { transform: scaleY(1); transform-origin: top; }
+      50.1%{ transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── COMMON SECTION ─────────────────────────── */
+    .sec { position: relative; }
+    .wrap { max-width: 1440px; margin: 0 auto; padding: 0 5rem; }
+    .sec-tag {
+      font-family: 'Orbitron', sans-serif; font-size: .62rem;
+      font-weight: 600; letter-spacing: .42em; text-transform: uppercase;
+      color: var(--org); margin-bottom: 1rem;
+      display: flex; align-items: center; gap: .9rem;
+    }
+    .sec-tag::before { content: ''; width: 28px; height: 1px; background: var(--org); }
+    .sec-h {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 700;
+      line-height: 1.08; margin-bottom: 1.25rem;
+    }
+    .sec-p {
+      font-size: 1rem; font-weight: 400; color: var(--muted);
+      line-height: 1.75; max-width: 520px;
+    }
+
+    .rv { opacity: 0; transform: translateY(38px); transition: opacity .7s ease, transform .7s ease; }
+    .rv.on { opacity: 1; transform: translateY(0); }
+    .rv.d1 { transition-delay: .1s; }
+    .rv.d2 { transition-delay: .2s; }
+    .rv.d3 { transition-delay: .3s; }
+    .rv.d4 { transition-delay: .4s; }
+
+    /* ─── SERVICES ───────────────────────────────── */
+    #services { padding: 9rem 0; }
+    #services .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 7rem; align-items: start; }
+    .svc-head { position: sticky; top: 9rem; }
+    .svc-grid { display: grid; gap: 1.5rem; }
+
+    .svc-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 2rem 2rem 2rem 2.25rem;
+      position: relative; overflow: hidden; cursor: none;
+      transition: border-color .3s, transform .35s;
+    }
+    .svc-card::before {
+      content: ''; position: absolute; left: 0; top: 0;
+      width: 3px; height: 0; background: linear-gradient(to bottom, var(--org), #e07b00);
+      transition: height .4s ease;
+    }
+    .svc-card::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(110deg, rgba(245,166,35,.03), transparent);
+      opacity: 0; transition: opacity .3s;
+    }
+    .svc-card:hover { border-color: rgba(245,166,35,.3); transform: translateX(5px); }
+    .svc-card:hover::before { height: 100%; }
+    .svc-card:hover::after { opacity: 1; }
+
+    .svc-ico { width: 44px; height: 44px; margin-bottom: 1.25rem; }
+    .svc-ico svg { width: 100%; height: 100%; stroke: var(--org); fill: none; stroke-width: 1.5; }
+    .svc-name {
+      font-family: 'Orbitron', sans-serif; font-size: .82rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--white); margin-bottom: .65rem;
+    }
+    .svc-desc { font-size: .95rem; font-weight: 400; color: var(--muted); line-height: 1.65; }
+    .svc-arr {
+      position: absolute; right: 1.5rem; bottom: 1.5rem;
+      color: var(--org); opacity: 0; transform: translateX(-8px);
+      transition: opacity .3s, transform .3s; font-size: 1.1rem; font-family: monospace;
+    }
+    .svc-card:hover .svc-arr { opacity: 1; transform: translateX(0); }
+
+    /* ─── FLEET ──────────────────────────────────── */
+    #fleet {
+      padding: 8rem 0 9rem;
+      background: var(--bg2);
+      clip-path: polygon(0 4%, 100% 0, 100% 96%, 0 100%);
+    }
+    #fleet .wrap { display: flex; flex-direction: column; gap: 4rem; }
+    .fleet-top { display: flex; align-items: flex-end; justify-content: space-between; }
+    .fleet-top .sec-p { max-width: 300px; }
+
+    .fleet-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+
+    .fleet-card {
+      background: var(--bg3); border: 1px solid var(--border);
+      position: relative; overflow: hidden; cursor: none;
+      transition: border-color .35s;
+    }
+    .fleet-card:hover { border-color: rgba(245,166,35,.3); }
+
+    .fleet-ph {
+      aspect-ratio: 4/3; width: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: .75rem; position: relative;
+      background: linear-gradient(135deg, var(--bg3), rgba(245,166,35,.015));
+    }
+    .fleet-ph svg { width: 44px; height: 44px; stroke: rgba(245,166,35,.2); fill: none; stroke-width: 1.2; }
+    .fleet-ph .ph-label { font-size: .58rem; }
+    .fleet-ph .ph-sub  { font-size: .66rem; color: rgba(90,96,112,.45); }
+
+    .fleet-tilt-glow {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0;
+      background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(245,166,35,.12) 0%, transparent 65%);
+      transition: opacity .3s;
+    }
+    .fleet-card:hover .fleet-tilt-glow { opacity: 1; }
+
+    .fleet-hover-info {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(3,3,5,.92) 0%, transparent 55%);
+      display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity .4s, transform .4s;
+    }
+    .fleet-card:hover .fleet-hover-info { opacity: 1; transform: translateY(0); }
+    .fleet-hover-info .fhi-name {
+      font-family: 'Orbitron', sans-serif; font-size: .82rem; font-weight: 700;
+      letter-spacing: .15em; text-transform: uppercase; color: var(--white);
+    }
+    .fleet-hover-info .fhi-type { font-size: .82rem; color: var(--org); font-weight: 400; margin-top: .2rem; }
+
+    .fleet-info {
+      padding: 1.15rem 1.5rem; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .fi-name {
+      font-family: 'Orbitron', sans-serif; font-size: .75rem; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--white);
+    }
+    .fi-cap {
+      font-size: .78rem; color: var(--muted);
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .fi-cap::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--org); opacity: .5; }
+
+    /* ─── FEATURES ───────────────────────────────── */
+    #features { padding: 9rem 0; }
+    .feat-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+
+    .feat-visual { position: relative; height: 520px; }
+    .feat-frame {
+      width: 100%; height: 100%; border: 1px solid var(--border); background: var(--bg2);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem;
+    }
+    .feat-frame svg { width: 60px; height: 60px; stroke: rgba(245,166,35,.18); fill: none; stroke-width: 1; }
+
+    .f-badge {
+      position: absolute; background: var(--bg); border: 1px solid var(--border);
+      padding: .8rem 1.25rem; display: flex; align-items: center; gap: .9rem;
+    }
+    .f-badge.b1 { top: 2.5rem; right: -2.5rem; animation: fbFloat 4s ease-in-out infinite; }
+    .f-badge.b2 { bottom: 2.5rem; left: -2.5rem; animation: fbFloat 4s ease-in-out infinite 2s; }
+    @keyframes fbFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+
+    .fb-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--org10), var(--n10));
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .fb-val { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; color: var(--white); }
+    .fb-desc { font-size: .72rem; color: var(--muted); }
+
+    .feat-list { display: flex; flex-direction: column; gap: 0; }
+    .feat-sep { height: 1px; background: var(--border); }
+
+    .feat-item { display: flex; gap: 1.5rem; align-items: flex-start; padding: 2rem 0; }
+    .feat-num {
+      font-family: 'Orbitron', sans-serif; font-size: .62rem; font-weight: 700;
+      color: var(--org); opacity: .45; padding-top: 4px; flex-shrink: 0; letter-spacing: .1em;
+    }
+    .feat-title {
+      font-family: 'Orbitron', sans-serif; font-size: .85rem; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--white); margin-bottom: .5rem;
+    }
+    .feat-desc { font-size: .95rem; font-weight: 400; color: var(--muted); line-height: 1.65; }
+
+    /* ─── BOOKING ────────────────────────────────── */
+    #booking {
+      padding: 8rem 0 9rem; background: var(--bg2);
+      clip-path: polygon(0 3.5%, 100% 0, 100% 100%, 0 100%);
+    }
+    .book-layout { display: grid; grid-template-columns: 1fr 1.15fr; gap: 6rem; align-items: start; }
+    .book-info { display: flex; flex-direction: column; gap: 2.5rem; }
+    .book-contacts { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .con-item { display: flex; gap: 1.25rem; align-items: flex-start; }
+    .con-icon {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border: 1px solid var(--border); background: var(--org10);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .con-icon svg { width: 20px; height: 20px; stroke: var(--org); fill: none; stroke-width: 1.5; }
+    .con-lbl {
+      font-family: 'Orbitron', sans-serif; font-size: .6rem; font-weight: 600;
+      letter-spacing: .22em; text-transform: uppercase; color: var(--org); margin-bottom: .2rem;
+    }
+    .con-val { font-size: 1rem; color: var(--white); font-weight: 500; }
+
+    .book-form { display: flex; flex-direction: column; gap: 1.25rem; }
+    .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .f-group { display: flex; flex-direction: column; gap: .5rem; }
+    .f-lbl {
+      font-family: 'Orbitron', sans-serif; font-size: .6rem; font-weight: 600;
+      letter-spacing: .22em; text-transform: uppercase; color: var(--org);
+    }
+    .f-inp, .f-sel {
+      background: rgba(245,166,35,.03); border: 1px solid var(--border);
+      color: var(--white); font-family: 'Rajdhani', sans-serif;
+      font-size: .95rem; font-weight: 400;
+      padding: .85rem 1.25rem; outline: none; width: 100%;
+      transition: border-color .3s, background .3s;
+    }
+    .f-inp:focus, .f-sel:focus { border-color: var(--org); background: var(--org10); }
+    .f-inp::placeholder { color: rgba(90,96,112,.6); }
+    .f-sel { appearance: none; cursor: none; }
+    .f-sel option { background: var(--bg2); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.4) sepia(1) saturate(5) hue-rotate(5deg); cursor: none; }
+
+    .f-btn {
+      font-family: 'Orbitron', sans-serif; font-size: .78rem; font-weight: 700;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: #030305; background: linear-gradient(90deg, var(--org), #e07b00);
+      border: none; padding: 1.2rem; cursor: none; margin-top: .4rem;
+      position: relative; overflow: hidden;
+      transition: box-shadow .35s;
+    }
+    .f-btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, #e07b00, var(--org));
+      opacity: 0; transition: opacity .3s;
+    }
+    .f-btn:hover { box-shadow: 0 0 36px rgba(245,166,35,.4), 0 0 72px rgba(245,166,35,.15); }
+    .f-btn:hover::before { opacity: 1; }
+    .f-btn span { position: relative; z-index: 1; }
+
+    /* ─── FOOTER ─────────────────────────────────── */
+    footer {
+      background: var(--bg); border-top: 1px solid var(--border);
+      padding: 5rem 0 2.5rem;
+    }
+    .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; margin-bottom: 4rem; }
+    .foot-brand .f-logo {
+      font-family: 'Orbitron', sans-serif; font-size: 1.15rem; font-weight: 900;
+      letter-spacing: .15em; color: var(--white);
+      display: flex; align-items: center; gap: .75rem; margin-bottom: .25rem;
+    }
+    .f-logo .lt { color: var(--org); }
+    .f-sub-logo {
+      font-size: .5rem; font-weight: 700; letter-spacing: .35em;
+      color: var(--org); text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .foot-brand p { font-size: .9rem; color: var(--muted); line-height: 1.75; max-width: 270px; }
+
+    .foot-col h4 {
+      font-family: 'Orbitron', sans-serif; font-size: .65rem; font-weight: 700;
+      letter-spacing: .22em; text-transform: uppercase; color: var(--white); margin-bottom: 1.5rem;
+    }
+    .foot-col ul { list-style: none; display: flex; flex-direction: column; gap: .8rem; }
+    .foot-col a { font-size: .9rem; color: var(--muted); text-decoration: none; transition: color .3s; }
+    .foot-col a:hover { color: var(--org); }
+
+    .foot-bot {
+      border-top: 1px solid var(--border); padding-top: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .foot-copy { font-size: .78rem; color: var(--muted); opacity: .55; }
+    .foot-soc { display: flex; gap: .75rem; }
+    .soc-a {
+      width: 36px; height: 36px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: .75rem; font-weight: 600;
+      text-decoration: none; cursor: none;
+      transition: border-color .3s, color .3s, background .3s;
+    }
+    .soc-a:hover { border-color: var(--org); color: var(--org); background: var(--org10); }
+  </style>
+</head>
+<body>
+
+<div id="c-dot"></div>
+<div id="c-ring"></div>
+
+<!-- NAVBAR -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <span class="logo-diamond"></span>
+    <span><span class="logo-trans">Trans</span>Kartz<span class="nav-sub">Tour &amp; Transfer</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#services">Servicios</a></li>
+    <li><a href="#fleet">Flota</a></li>
+    <li><a href="#features">Nosotros</a></li>
+    <li><a href="#booking">Contacto</a></li>
+  </ul>
+  <a href="#booking" class="nav-cta">Reservar ahora</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="h-grid"></div>
+  <div class="h-glow h-glow-1"></div>
+  <div class="h-glow h-glow-2"></div>
+  <div id="particles"></div>
+  <div id="h-lines"></div>
+
+  <div class="h-content">
+    <div class="h-badge">Tour &amp; Transfer · Servicio de Élite</div>
+    <h1 class="h-title">
+      <span class="t1">VIAJA</span>
+      <span class="t2">SIN</span>
+      <span class="t3">LÍMITES</span>
+    </h1>
+    <p class="h-sub">
+      Transporte privado de <strong>primera clase</strong> para ejecutivos, eventos y traslados aeroportuarios.
+      Puntualidad, confort y discreción garantizados en cada kilómetro.
+    </p>
+    <div class="h-btns">
+      <a href="#booking" class="btn-p magnetic"><span>Solicitar servicio</span></a>
+      <a href="#fleet" class="btn-s magnetic">Ver flota</a>
+    </div>
+  </div>
+
+  <div class="h-visual">
+    <div class="h-frame">
+      <span class="fc tl"></span><span class="fc tr"></span>
+      <span class="fc bl"></span><span class="fc br"></span>
+      <div class="ph-icon">
+        <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14l4 4v6a2 2 0 0 1-2 2h-2"/><circle cx="8" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></svg>
+      </div>
+      <span class="ph-label">Imagen Principal</span>
+      <span class="ph-sub">Vehículo o escena corporativa</span>
+    </div>
+  </div>
+
+  <div class="h-stats">
+    <div class="stat-item">
+      <div class="stat-n"><span class="cnt" data-to="8">0</span><em>+</em></div>
+      <div class="stat-l">Años de experiencia</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item">
+      <div class="stat-n"><span class="cnt" data-to="1200">0</span><em>+</em></div>
+      <div class="stat-l">Viajes completados</div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item">
+      <div class="stat-n"><span class="cnt" data-to="98">0</span><em>%</em></div>
+      <div class="stat-l">Satisfacción del cliente</div>
+    </div>
+  </div>
+
+  <div class="scroll-cue">
+    <span class="sc-txt">Scroll</span>
+    <div class="sc-line"></div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services" class="sec">
+  <div class="wrap">
+    <div class="svc-head rv">
+      <div class="sec-tag">Lo que hacemos</div>
+      <h2 class="sec-h">Servicios<br>de élite</h2>
+      <p class="sec-p">Cada servicio diseñado para superar expectativas con tecnología, profesionalismo y atención al detalle.</p>
+    </div>
+    <div class="svc-grid">
+      <div class="svc-card rv d1">
+        <div class="svc-ico">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="svc-name">Traslados Aeroportuarios</div>
+        <p class="svc-desc">Recogida y entrega puntual en todos los aeropuertos. Monitoreo de vuelos en tiempo real para garantizar tu llegada a tiempo, siempre.</p>
+        <span class="svc-arr">→</span>
+      </div>
+      <div class="svc-card rv d2">
+        <div class="svc-ico">
+          <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        </div>
+        <div class="svc-name">Transporte Corporativo</div>
+        <p class="svc-desc">Servicio discreto y profesional para ejecutivos y equipos. Flota premium con WiFi, temperatura controlada y conectividad total.</p>
+        <span class="svc-arr">→</span>
+      </div>
+      <div class="svc-card rv d3">
+        <div class="svc-ico">
+          <svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="svc-name">Tours y Excursiones</div>
+        <p class="svc-desc">Descubre los mejores destinos con chóferes expertos. Rutas personalizadas para experiencias únicas e inolvidables.</p>
+        <span class="svc-arr">→</span>
+      </div>
+      <div class="svc-card rv d4">
+        <div class="svc-ico">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div class="svc-name">Eventos Especiales</div>
+        <p class="svc-desc">Bodas, galas y eventos VIP con vehículos de lujo y coordinación logística impecable para grupos de cualquier tamaño.</p>
+        <span class="svc-arr">→</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLEET -->
+<section id="fleet" class="sec">
+  <div class="wrap">
+    <div class="fleet-top rv">
+      <div>
+        <div class="sec-tag">Nuestra flota</div>
+        <h2 class="sec-h">Vehículos de<br>primer nivel</h2>
+      </div>
+      <p class="sec-p">Selecciona el vehículo ideal para cada ocasión. Todos con mantenimiento certificado y equipamiento premium.</p>
+    </div>
+    <div class="fleet-grid">
+      <div class="fleet-card rv d1">
+        <div class="fleet-ph">
+          <div class="fleet-tilt-glow"></div>
+          <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span class="ph-label">Imagen del vehículo</span>
+          <span class="ph-sub">Sedan ejecutivo</span>
+        </div>
+        <div class="fleet-hover-info">
+          <span class="fhi-name">Sedan Ejecutivo</span>
+          <span class="fhi-type">Viajes corporativos · Aeropuerto</span>
+        </div>
+        <div class="fleet-info">
+          <span class="fi-name">Sedan Premium</span>
+          <span class="fi-cap">Hasta 3 pasajeros</span>
+        </div>
+      </div>
+      <div class="fleet-card rv d2">
+        <div class="fleet-ph">
+          <div class="fleet-tilt-glow"></div>
+          <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14l4 4v6a2 2 0 0 1-2 2h-2"/><circle cx="8" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></svg>
+          <span class="ph-label">Imagen del vehículo</span>
+          <span class="ph-sub">SUV de lujo</span>
+        </div>
+        <div class="fleet-hover-info">
+          <span class="fhi-name">SUV de Lujo</span>
+          <span class="fhi-type">Grupos pequeños · Todo terreno</span>
+        </div>
+        <div class="fleet-info">
+          <span class="fi-name">SUV Premium</span>
+          <span class="fi-cap">Hasta 6 pasajeros</span>
+        </div>
+      </div>
+      <div class="fleet-card rv d3">
+        <div class="fleet-ph">
+          <div class="fleet-tilt-glow"></div>
+          <svg viewBox="0 0 24 24"><rect x="1" y="3" width="18" height="13" rx="2"/><path d="M19 8h2a2 2 0 0 1 2 2v5H19V8z"/><circle cx="6" cy="18.5" r="2.5"/><circle cx="16" cy="18.5" r="2.5"/></svg>
+          <span class="ph-label">Imagen del vehículo</span>
+          <span class="ph-sub">Van ejecutiva</span>
+        </div>
+        <div class="fleet-hover-info">
+          <span class="fhi-name">Van Ejecutiva</span>
+          <span class="fhi-type">Grupos · Eventos · Tours</span>
+        </div>
+        <div class="fleet-info">
+          <span class="fi-name">Van de Lujo</span>
+          <span class="fi-cap">Hasta 12 pasajeros</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="sec">
+  <div class="wrap">
+    <div class="feat-layout">
+      <div class="feat-visual rv">
+        <div class="feat-frame">
+          <span class="fc tl"></span><span class="fc tr"></span>
+          <span class="fc bl"></span><span class="fc br"></span>
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span class="ph-label">Imagen institucional</span>
+          <span class="ph-sub">Interior de vehículo o equipo</span>
+        </div>
+        <div class="f-badge b1">
+          <div class="fb-icon">⚡</div>
+          <div><div class="fb-val">24/7</div><div class="fb-desc">Disponibilidad total</div></div>
+        </div>
+        <div class="f-badge b2">
+          <div class="fb-icon">🛡</div>
+          <div><div class="fb-val">100%</div><div class="fb-desc">Conductores certificados</div></div>
+        </div>
+      </div>
+
+      <div class="feat-list rv d2">
+        <div class="sec-tag">Por qué elegirnos</div>
+        <h2 class="sec-h">Excelencia en cada kilómetro</h2>
+        <div class="feat-sep"></div>
+        <div class="feat-item">
+          <span class="feat-num">01</span>
+          <div>
+            <div class="feat-title">Puntualidad garantizada</div>
+            <p class="feat-desc">Monitoreamos el tráfico en tiempo real y planificamos cada ruta con precisión milimétrica para asegurar tu llegada a tiempo, siempre.</p>
+          </div>
+        </div>
+        <div class="feat-sep"></div>
+        <div class="feat-item">
+          <span class="feat-num">02</span>
+          <div>
+            <div class="feat-title">Conductores profesionales</div>
+            <p class="feat-desc">Equipo certificado con experiencia en protocolo ejecutivo, idiomas y manejo defensivo. Discreción absoluta garantizada.</p>
+          </div>
+        </div>
+        <div class="feat-sep"></div>
+        <div class="feat-item">
+          <span class="feat-num">03</span>
+          <div>
+            <div class="feat-title">Confort y tecnología</div>
+            <p class="feat-desc">Vehículos con interiores premium, WiFi, agua mineral, climatización individual y asistente de ruta en tiempo real.</p>
+          </div>
+        </div>
+        <div class="feat-sep"></div>
+        <div class="feat-item">
+          <span class="feat-num">04</span>
+          <div>
+            <div class="feat-title">Seguimiento en vivo</div>
+            <p class="feat-desc">Accede al estado de tu servicio desde cualquier dispositivo. Comunicación directa con tu conductor durante todo el trayecto.</p>
+          </div>
+        </div>
+        <div class="feat-sep"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING -->
+<section id="booking" class="sec">
+  <div class="wrap">
+    <div class="book-layout">
+      <div class="book-info rv">
+        <div>
+          <div class="sec-tag">Reservas</div>
+          <h2 class="sec-h">Solicita tu<br>servicio hoy</h2>
+          <p class="sec-p">Completa el formulario y nos comunicamos en menos de 2 horas para confirmar tu reserva.</p>
+        </div>
+        <div class="book-contacts">
+          <div class="con-item">
+            <div class="con-icon">
+              <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg>
+            </div>
+            <div>
+              <div class="con-lbl">Teléfono</div>
+              <div class="con-val">+1 (555) 000-0000</div>
+            </div>
+          </div>
+          <div class="con-item">
+            <div class="con-icon">
+              <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <div class="con-lbl">Email</div>
+              <div class="con-val">contacto@transkartz.com</div>
+            </div>
+          </div>
+          <div class="con-item">
+            <div class="con-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <div class="con-lbl">Disponibilidad</div>
+              <div class="con-val">24 horas · 7 días</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rv d2">
+        <form class="book-form" onsubmit="return false;">
+          <div class="f-row">
+            <div class="f-group">
+              <label class="f-lbl">Nombre</label>
+              <input class="f-inp" type="text" placeholder="Tu nombre completo">
+            </div>
+            <div class="f-group">
+              <label class="f-lbl">Teléfono</label>
+              <input class="f-inp" type="tel" placeholder="+1 555 000 000">
+            </div>
+          </div>
+          <div class="f-group">
+            <label class="f-lbl">Email</label>
+            <input class="f-inp" type="email" placeholder="tu@email.com">
+          </div>
+          <div class="f-row">
+            <div class="f-group">
+              <label class="f-lbl">Tipo de servicio</label>
+              <select class="f-sel f-inp">
+                <option value="">Seleccionar...</option>
+                <option>Traslado aeroportuario</option>
+                <option>Corporativo</option>
+                <option>Evento especial</option>
+                <option>Tour / Excursión</option>
+              </select>
+            </div>
+            <div class="f-group">
+              <label class="f-lbl">Vehículo</label>
+              <select class="f-sel f-inp">
+                <option value="">Seleccionar...</option>
+                <option>Sedan Ejecutivo</option>
+                <option>SUV Premium</option>
+                <option>Van de Lujo</option>
+              </select>
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-group">
+              <label class="f-lbl">Fecha</label>
+              <input class="f-inp" type="date">
+            </div>
+            <div class="f-group">
+              <label class="f-lbl">Pasajeros</label>
+              <input class="f-inp" type="number" placeholder="Nº pasajeros" min="1" max="50">
+            </div>
+          </div>
+          <div class="f-group">
+            <label class="f-lbl">Detalles adicionales</label>
+            <input class="f-inp" type="text" placeholder="Origen, destino, observaciones...">
+          </div>
+          <button class="f-btn magnetic" type="submit"><span>Enviar solicitud</span></button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="f-logo">
+          <span class="logo-diamond" style="width:20px;height:20px;"></span>
+          <span><span class="lt">Trans</span>Kartz</span>
+        </div>
+        <div class="f-sub-logo">Tour &amp; Transfer</div>
+        <p>Transporte privado de élite para quienes exigen lo mejor. Puntualidad, confort y seguridad en cada viaje.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Servicios</h4>
+        <ul>
+          <li><a href="#">Aeroportuario</a></li>
+          <li><a href="#">Corporativo</a></li>
+          <li><a href="#">Eventos VIP</a></li>
+          <li><a href="#">Tours</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="#">Quiénes somos</a></li>
+          <li><a href="#">Nuestra flota</a></li>
+          <li><a href="#">Conductores</a></li>
+          <li><a href="#">Certificaciones</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacidad</a></li>
+          <li><a href="#">Términos de uso</a></li>
+          <li><a href="#">Cookies</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span class="foot-copy">© 2025 TransKartz Tour &amp; Transfer. Todos los derechos reservados.</span>
+      <div class="foot-soc">
+        <a class="soc-a" href="#">in</a>
+        <a class="soc-a" href="#">ig</a>
+        <a class="soc-a" href="#">tw</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── CURSOR ──────────────────────────────────────────
+const dot = document.getElementById('c-dot');
+const ring = document.getElementById('c-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+});
+(function animRing() {
+  rx += (mx - rx) * 0.11; ry += (my - ry) * 0.11;
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('a,button,input,select,.svc-card,.fleet-card').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('hov'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('hov'));
+});
+
+// ── MAGNETIC BUTTONS ────────────────────────────────
+document.querySelectorAll('.magnetic').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const r = btn.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width  / 2) * 0.28;
+    const y = (e.clientY - r.top  - r.height / 2) * 0.28;
+    btn.style.transform = `translate(${x}px,${y}px)`;
+    btn.style.transition = 'transform 0.1s ease';
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = 'translate(0,0)';
+    btn.style.transition = 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)';
+  });
+});
+
+// ── NAVBAR ──────────────────────────────────────────
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('stuck', scrollY > 60));
+
+// ── PARTICLES ───────────────────────────────────────
+const ptCont = document.getElementById('particles');
+for (let i = 0; i < 45; i++) {
+  const p = document.createElement('div');
+  p.className = 'pt';
+  const s = Math.random() * 3 + 1;
+  p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;
+    animation-duration:${Math.random()*14+10}s;
+    animation-delay:${Math.random()*-25}s;
+    opacity:${Math.random()*.45+.08};`;
+  ptCont.appendChild(p);
+}
+
+// ── DIAGONAL LINES ──────────────────────────────────
+const lCont = document.getElementById('h-lines');
+for (let i = 0; i < 6; i++) {
+  const l = document.createElement('div');
+  l.className = 'h-line';
+  l.style.cssText = `top:${15+i*13}%;width:${220+Math.random()*280}px;
+    animation-duration:${7+Math.random()*7}s;
+    animation-delay:${Math.random()*-14}s;`;
+  lCont.appendChild(l);
+}
+
+// ── SCROLL REVEAL ────────────────────────────────────
+const rvObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); rvObs.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.rv').forEach(el => rvObs.observe(el));
+
+// ── STATS COUNTER ────────────────────────────────────
+let counted = false;
+function runCounters() {
+  if (counted) return; counted = true;
+  document.querySelectorAll('.cnt').forEach(el => {
+    const to = +el.dataset.to, dur = 1800, t0 = Date.now();
+    const tick = () => {
+      const p = Math.min((Date.now()-t0)/dur, 1);
+      el.textContent = Math.floor((1 - Math.pow(1-p, 3)) * to);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    tick();
+  });
+}
+new IntersectionObserver(es => { if (es[0].isIntersecting) runCounters(); }, { threshold: .5 })
+  .observe(document.getElementById('hero'));
+setTimeout(runCounters, 1200);
+
+// ── FLEET 3D TILT ─────────────────────────────────────
+document.querySelectorAll('.fleet-card').forEach(card => {
+  const glow = card.querySelector('.fleet-tilt-glow');
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width  - 0.5;
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+    card.style.transform = `perspective(700px) rotateY(${x*9}deg) rotateX(${-y*9}deg) scale(1.025)`;
+    card.style.transition = 'transform 0.08s ease';
+    glow.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    glow.style.setProperty('--my', ((e.clientY - r.top)  / r.height * 100) + '%');
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'none';
+    card.style.transition = 'transform 0.5s ease';
+  });
+});
+
+// ── HERO PARALLAX ─────────────────────────────────────
+const hContent = document.querySelector('.h-content');
+window.addEventListener('scroll', () => {
+  const y = scrollY;
+  if (y < window.innerHeight) {
+    hContent.style.transform = `translateY(${y * 0.28}px)`;
+    hContent.style.opacity = Math.max(0, 1 - y / 580);
+  }
+}, { passive: true });
+</script>
+</body>
+</html>
