@@ -14,6 +14,7 @@ function loadImgs(): Record<ImgKey, string> {
 export default function LandingPage() {
   const [adminMode, setAdminMode] = useState(false);
   const [imgs, setImgs] = useState<Record<ImgKey, string>>(loadImgs);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Sync body class
   useEffect(() => {
@@ -158,8 +159,13 @@ export default function LandingPage() {
     // ── SCROLL REVEAL ────────────────────────────────
     const rvObs = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); rvObs.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.rv').forEach(el => rvObs.observe(el));
+    }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
+    const rvEls = document.querySelectorAll('.rv');
+    rvEls.forEach(el => rvObs.observe(el));
+    // Failsafe: show all if observer hasn't fired after 1.2s
+    const rvFallback = setTimeout(() => {
+      rvEls.forEach(el => el.classList.add('on'));
+    }, 1200);
 
     // ── STATS COUNTER ────────────────────────────────
     let counted = false;
@@ -245,6 +251,7 @@ export default function LandingPage() {
       document.removeEventListener('keydown', onKey);
       cancelAnimationFrame(rafId);
       clearTimeout(statsTimer);
+      clearTimeout(rvFallback);
       if (autoPlay) clearInterval(autoPlay);
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseover', addHov);
@@ -260,6 +267,14 @@ export default function LandingPage() {
 
   return (
     <>
+      <style>{`
+        body {
+          background-image: url(${heroBgImg});
+          background-size: cover;
+          background-position: center top;
+          background-attachment: fixed;
+        }
+      `}</style>
       <div id="c-dot"></div>
       <div id="c-ring"></div>
 
@@ -293,8 +308,28 @@ export default function LandingPage() {
             </button>
           )}
           <a href="#booking-strip" className="nav-cta magnetic">Reservar ahora</a>
+          <button
+            className={`nav-hamburger${mobileMenuOpen ? ' open' : ''}`}
+            onClick={() => setMobileMenuOpen(o => !o)}
+            aria-label="Menú"
+          >
+            <span></span><span></span><span></span>
+          </button>
         </div>
       </nav>
+
+      {/* ── MOBILE MENU ── */}
+      {mobileMenuOpen && (
+        <div className="mobile-menu">
+          <ul>
+            <li><a href="#services" onClick={() => setMobileMenuOpen(false)}>Servicios</a></li>
+            <li><a href="#fleet" onClick={() => setMobileMenuOpen(false)}>Flota</a></li>
+            <li><a href="#why-us" onClick={() => setMobileMenuOpen(false)}>Nosotros</a></li>
+            <li><a href="#booking-strip" onClick={() => setMobileMenuOpen(false)}>Contacto</a></li>
+          </ul>
+          <a href="#booking-strip" className="mobile-menu-cta" onClick={() => setMobileMenuOpen(false)}>Reservar ahora</a>
+        </div>
+      )}
 
       {/* ── HERO ── */}
       <section id="hero" className="has-bg">
@@ -322,12 +357,12 @@ export default function LandingPage() {
             <div className="h-badge">Tour &amp; Transfer · Servicio de Élite</div>
             <h1 className="h-title">
               Viaja con<br />
-              <em>elegancia</em><br />
+              <em>seguridad</em><br />
               y confort
             </h1>
             <p className="h-sub">
               Transporte privado de primera clase para ejecutivos, eventos y traslados aeroportuarios.
-              Puntualidad, confort y discreción garantizados.
+              Puntualidad, seguridad y confort garantizados — servicio validado por el Ministerio de Transporte.
             </p>
             <div className="h-btns">
               <a href="#booking-strip" className="btn-p magnetic"><span>Reservar ahora</span></a>
@@ -387,12 +422,40 @@ export default function LandingPage() {
           <form className="bs-form" onSubmit={e => e.preventDefault()}>
             <div className="bs-field">
               <label>Origen</label>
-              <input type="text" placeholder="Ciudad o aeropuerto" />
+              <select>
+                <optgroup label="— Zona Costera —">
+                  <option>Terminal VTP · Valparaíso</option>
+                  <option>Hoteles Valparaíso</option>
+                  <option>Viña del Mar</option>
+                  <option>Reñaca / Concón</option>
+                  <option>Zapallar</option>
+                  <option>San Antonio</option>
+                </optgroup>
+                <optgroup label="— Zona Central —">
+                  <option>Aeropuerto Internacional AMB</option>
+                  <option>Hoteles en Santiago</option>
+                  <option>Valle de Casablanca</option>
+                </optgroup>
+              </select>
             </div>
             <div className="bs-sep">→</div>
             <div className="bs-field">
               <label>Destino</label>
-              <input type="text" placeholder="Ciudad o aeropuerto" />
+              <select>
+                <optgroup label="— Zona Costera —">
+                  <option>Terminal VTP · Valparaíso</option>
+                  <option>Hoteles Valparaíso</option>
+                  <option>Viña del Mar</option>
+                  <option>Reñaca / Concón</option>
+                  <option>Zapallar</option>
+                  <option>San Antonio</option>
+                </optgroup>
+                <optgroup label="— Zona Central —">
+                  <option>Aeropuerto Internacional AMB</option>
+                  <option>Hoteles en Santiago</option>
+                  <option>Valle de Casablanca</option>
+                </optgroup>
+              </select>
             </div>
             <div className="bs-field">
               <label>Fecha</label>
@@ -403,17 +466,21 @@ export default function LandingPage() {
               <select>
                 <option>1 pasajero</option>
                 <option>2 pasajeros</option>
-                <option>3–6 pasajeros</option>
+                <option>3 pasajeros</option>
+                <option>4 pasajeros</option>
+                <option>5 pasajeros</option>
+                <option>6 pasajeros</option>
                 <option>7–12 pasajeros</option>
               </select>
             </div>
             <div className="bs-field">
               <label>Servicio</label>
               <select>
-                <option>Aeroportuario</option>
-                <option>Corporativo</option>
+                <option>Traslado privado</option>
+                <option>Servicio compartido (VTP)</option>
+                <option>Corporativo / Empresa</option>
+                <option>Silla de ruedas</option>
                 <option>Tour / Excursión</option>
-                <option>Evento especial</option>
               </select>
             </div>
             <button type="submit" className="bs-btn magnetic"><span>Cotizar →</span></button>
@@ -431,22 +498,23 @@ export default function LandingPage() {
           </div>
           <div className="svc-grid">
             <div className="svc-card rv d1">
-              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg></div>
-              <h3 className="svc-name">Traslados Aeroportuarios</h3>
-              <p className="svc-desc">Recogida y entrega puntual en todos los aeropuertos. Monitoreo de vuelos en tiempo real para garantizar tu llegada siempre a tiempo.</p>
+              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14l4 4v6a2 2 0 0 1-2 2h-2" /><circle cx="8" cy="17" r="2" /><circle cx="18" cy="17" r="2" /></svg></div>
+              <h3 className="svc-name">Traslados Privados</h3>
+              <p className="svc-desc">Disponemos de variados vehículos full equipados según tu necesidad. Operamos desde Valparaíso hacia todos los destinos: Hoteles en Valparaíso, Viña del Mar, Hoteles en Santiago, Aeropuerto Internacional AMB y más.</p>
               <a href="#booking-strip" className="svc-link">Reservar →</a>
             </div>
             <div className="svc-card rv d2">
-              <div className="svc-ico"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /><line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" /></svg></div>
-              <h3 className="svc-name">Transporte Corporativo</h3>
-              <p className="svc-desc">Servicio discreto y profesional para ejecutivos y equipos. Flota premium con WiFi, temperatura controlada y conectividad total.</p>
+              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg></div>
+              <h3 className="svc-name">Servicios Compartidos</h3>
+              <p className="svc-desc">Desde el Terminal de Pasajeros VTP, minibuses de distintas capacidades para traslados compartidos al aeropuerto de Santiago y hoteles en Viña del Mar, Valparaíso y Santiago.</p>
+              <div className="svc-highlight">Terminal VTP → Aeropuerto: USD 50 / persona (equipaje incluido)</div>
               <a href="#booking-strip" className="svc-link">Reservar →</a>
             </div>
             <div className="svc-card rv d3">
-              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" /><circle cx="12" cy="10" r="3" /></svg></div>
-              <h3 className="svc-name">Tours y Excursiones</h3>
-              <p className="svc-desc">Descubre los mejores destinos con chóferes expertos. Rutas personalizadas para experiencias únicas e inolvidables.</p>
-              <a href="#booking-strip" className="svc-link">Reservar →</a>
+              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg></div>
+              <h3 className="svc-name">Especiales y Empresas</h3>
+              <p className="svc-desc">Para empresas nos adaptamos a sus rutas y necesidades con la flota que requieran. También contamos con vehículos adaptados para pasajeros en silla de ruedas: plataforma elevadora para sillas manuales y eléctricas, amplio espacio para equipajes y acompañantes.</p>
+              <a href="#booking-strip" className="svc-link">Cotizar →</a>
             </div>
           </div>
         </div>
@@ -504,6 +572,13 @@ export default function LandingPage() {
                   <div>
                     <div className="wi-title">Disponibilidad 24/7</div>
                     <p className="wi-desc">Atendemos tu solicitud en cualquier hora del día o la noche, los 365 días del año.</p>
+                  </div>
+                </li>
+                <li className="why-item">
+                  <span className="wi-check">✓</span>
+                  <div>
+                    <div className="wi-title">Validado por el Ministerio de Transporte</div>
+                    <p className="wi-desc">Nuestro servicio cumple con todas las normativas y estándares exigidos por el Ministerio de Transporte, garantizando operaciones seguras, legales y de máxima calidad.</p>
                   </div>
                 </li>
               </ul>
@@ -581,12 +656,12 @@ export default function LandingPage() {
               <div className="test-card">
                 <div className="test-card-inner">
                   <div className="tc-stars">★★★★★</div>
-                  <p className="tc-text">"El mejor servicio de transporte que he usado. Puntualidad perfecta, vehículo impecable y chofer muy profesional. Lo recomiendo al 100%."</p>
+                  <p className="tc-text">"Llegué al aeropuerto con tiempo justo y el conductor ya estaba esperándome. El vehículo impecable, con agua y todo. Sin duda el mejor traslado que he tenido desde Valparaíso."</p>
                   <div className="tc-author">
-                    <div className="tc-avatar">CM</div>
+                    <div className="tc-avatar">AM</div>
                     <div>
-                      <div className="tc-name">Carlos Martínez</div>
-                      <div className="tc-role">Director Ejecutivo</div>
+                      <div className="tc-name">Andrea Morales</div>
+                      <div className="tc-role">Viajera frecuente · Viña del Mar</div>
                     </div>
                   </div>
                 </div>
@@ -594,12 +669,12 @@ export default function LandingPage() {
               <div className="test-card">
                 <div className="test-card-inner">
                   <div className="tc-stars">★★★★★</div>
-                  <p className="tc-text">"Utilicé el servicio para subir al techo de mi casa y choco, caí del decimoquinto piso, quede en perfecto estado."</p>
+                  <p className="tc-text">"Contraté el servicio para trasladar a un cliente importante desde el aeropuerto hasta su hotel en Valparaíso. Todo perfecto: puntual, profesional y el auto en excelente estado. El cliente quedó muy bien impresionado."</p>
                   <div className="tc-author">
-                    <div className="tc-avatar">ML</div>
+                    <div className="tc-avatar">RP</div>
                     <div>
-                      <div className="tc-name">Matheus de Lara</div>
-                      <div className="tc-role">Cliente VIP</div>
+                      <div className="tc-name">Roberto Peña</div>
+                      <div className="tc-role">Gerente Comercial · Santiago</div>
                     </div>
                   </div>
                 </div>
@@ -607,12 +682,38 @@ export default function LandingPage() {
               <div className="test-card">
                 <div className="test-card-inner">
                   <div className="tc-stars">★★★★★</div>
-                  <p className="tc-text">"Transporte corporativo de primer nivel. Usamos TransKartz para todos nuestros ejecutivos visitantes. Confiable, discreto y profesional siempre."</p>
+                  <p className="tc-text">"Usé el servicio compartido desde el Terminal VTP al aeropuerto. Muy cómodo, a tiempo y con buen precio. Los conductores muy atentos con el equipaje. Lo recomendaría a cualquier turista que llegue a Valparaíso."</p>
                   <div className="tc-author">
-                    <div className="tc-avatar">MR</div>
+                    <div className="tc-avatar">SL</div>
                     <div>
-                      <div className="tc-name">Miguel Rodríguez</div>
-                      <div className="tc-role">Gerente General, TechCorp</div>
+                      <div className="tc-name">Sophie Laurent</div>
+                      <div className="tc-role">Turista · Francia</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="test-card">
+                <div className="test-card-inner">
+                  <div className="tc-stars">★★★★★</div>
+                  <p className="tc-text">"Necesitaba un vehículo adaptado para mi madre en silla de ruedas y TransKartz fue la única empresa que nos dio una solución real. La plataforma funcionó perfecto y el trato fue excelente durante todo el recorrido."</p>
+                  <div className="tc-author">
+                    <div className="tc-avatar">CG</div>
+                    <div>
+                      <div className="tc-name">Claudia González</div>
+                      <div className="tc-role">Clienta · Concón</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="test-card">
+                <div className="test-card-inner">
+                  <div className="tc-stars">★★★★★</div>
+                  <p className="tc-text">"Hicimos el tour por Valparaíso y Viña del Mar con guía en inglés. Increíble experiencia. El conductor conocía cada rincón y los horarios se respetaron al pie de la letra. Volveré a usarlos la próxima vez que visite Chile."</p>
+                  <div className="tc-author">
+                    <div className="tc-avatar">JW</div>
+                    <div>
+                      <div className="tc-name">James Wilson</div>
+                      <div className="tc-role">Turista · Estados Unidos</div>
                     </div>
                   </div>
                 </div>
