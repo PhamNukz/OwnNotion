@@ -1,10 +1,105 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './LandingPage.css';
+import heroBgImg from './assets/bgf2.jpg';
+
+const IMG_KEYS = ['hero', 'heroBg', 'whyUs', 'fleet1', 'fleet2', 'fleet3'] as const;
+type ImgKey = typeof IMG_KEYS[number];
+
+function loadImgs(): Record<ImgKey, string> {
+  return Object.fromEntries(
+    IMG_KEYS.map(k => [k, localStorage.getItem(`tk_img_${k}`) ?? ''])
+  ) as Record<ImgKey, string>;
+}
 
 export default function LandingPage() {
+  const [adminMode, setAdminMode] = useState(false);
+  const [imgs, setImgs] = useState<Record<ImgKey, string>>(loadImgs);
+
+  // Sync body class
   useEffect(() => {
+    document.body.classList.toggle('admin-mode', adminMode);
+    return () => { document.body.classList.remove('admin-mode'); };
+  }, [adminMode]);
+
+  const upload = (key: ImgKey) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const url = e.target?.result as string;
+        setImgs(prev => ({ ...prev, [key]: url }));
+        localStorage.setItem(`tk_img_${key}`, url);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
+  const deleteImg = (key: ImgKey, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setImgs(prev => ({ ...prev, [key]: '' }));
+    localStorage.removeItem(`tk_img_${key}`);
+  };
+
+  // Generic image slot: renders placeholder or uploaded image + admin overlay
+  const imgSlot = (key: ImgKey, placeholder: React.ReactNode, cls: string) => (
+    <div
+      className={`${cls}${adminMode ? ' img-clickable' : ''}`}
+      onClick={adminMode ? () => upload(key) : undefined}
+    >
+      {imgs[key]
+        ? <img src={imgs[key]} alt="" className="uploaded-img" />
+        : placeholder}
+      {adminMode && (
+        <div className="upload-overlay">
+          <span className="uov-icon">📷</span>
+          <span className="uov-text">{imgs[key] ? 'Cambiar imagen' : 'Subir imagen'}</span>
+          {imgs[key] && (
+            <button className="uov-del" onClick={e => deleteImg(key, e)}>✕ Eliminar</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // Fleet-ph slot: keeps tilt-glow always visible on top of image
+  const fleetSlot = (key: ImgKey, svg: React.ReactNode, label: string, sub: string) => (
+    <div
+      className={`fleet-ph${adminMode ? ' img-clickable' : ''}`}
+      onClick={adminMode ? () => upload(key) : undefined}
+    >
+      <div className="fleet-tilt-glow"></div>
+      {imgs[key]
+        ? <img src={imgs[key]} alt={label} className="uploaded-img" />
+        : <>{svg}<span className="ph-label">{label}</span><span className="ph-sub">{sub}</span></>}
+      {adminMode && (
+        <div className="upload-overlay">
+          <span className="uov-icon">📷</span>
+          <span className="uov-text">{imgs[key] ? 'Cambiar' : 'Subir imagen'}</span>
+          {imgs[key] && (
+            <button className="uov-del" onClick={e => deleteImg(key, e)}>✕ Eliminar</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  useEffect(() => {
+    // ── ADMIN KEYBOARD SHORTCUT ──────────────────────
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        setAdminMode(prev => !prev);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+
     // ── CURSOR ──────────────────────────────────────
-    const dot  = document.getElementById('c-dot') as HTMLElement;
+    const dot = document.getElementById('c-dot') as HTMLElement;
     const ring = document.getElementById('c-ring') as HTMLElement;
     let mx = 0, my = 0, rx = 0, ry = 0;
     let rafId: number;
@@ -22,13 +117,17 @@ export default function LandingPage() {
     };
     rafId = requestAnimationFrame(animRing);
 
-    const addHov = () => document.body.classList.add('hov');
-    const remHov = () => document.body.classList.remove('hov');
-    const hoverTargets = document.querySelectorAll('a,button,input,select,.svc-card,.fleet-card');
-    hoverTargets.forEach(el => {
-      el.addEventListener('mouseenter', addHov);
-      el.addEventListener('mouseleave', remHov);
-    });
+    // Event delegation — handles dynamic elements like admin overlays
+    const HOV_SEL = 'a,button,input,select,.svc-card,.fleet-card,.img-clickable';
+    const addHov = (e: Event) => {
+      if ((e.target as Element).closest(HOV_SEL)) document.body.classList.add('hov');
+    };
+    const remHov = (e: Event) => {
+      const rel = (e as MouseEvent).relatedTarget as Element | null;
+      if (!rel?.closest(HOV_SEL)) document.body.classList.remove('hov');
+    };
+    document.addEventListener('mouseover', addHov);
+    document.addEventListener('mouseout', remHov);
 
     // ── MAGNETIC BUTTONS ────────────────────────────
     type Handler = { el: Element; mm: EventListener; ml: EventListener };
@@ -37,8 +136,8 @@ export default function LandingPage() {
       const mm: EventListener = (e) => {
         const me = e as MouseEvent;
         const r = btn.getBoundingClientRect();
-        const x = (me.clientX - r.left - r.width  / 2) * 0.28;
-        const y = (me.clientY - r.top  - r.height / 2) * 0.28;
+        const x = (me.clientX - r.left - r.width / 2) * 0.28;
+        const y = (me.clientY - r.top - r.height / 2) * 0.28;
         (btn as HTMLElement).style.transform = `translate(${x}px,${y}px)`;
         (btn as HTMLElement).style.transition = 'transform 0.1s ease';
       };
@@ -55,25 +154,6 @@ export default function LandingPage() {
     const nav = document.getElementById('nav') as HTMLElement;
     const onNavScroll = () => nav.classList.toggle('stuck', window.scrollY > 60);
     window.addEventListener('scroll', onNavScroll);
-
-    // ── PARTICLES ───────────────────────────────────
-    const ptCont = document.getElementById('particles') as HTMLElement;
-    for (let i = 0; i < 45; i++) {
-      const p = document.createElement('div');
-      p.className = 'pt';
-      const s = Math.random() * 3 + 1;
-      p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random() * 100}%;animation-duration:${Math.random() * 14 + 10}s;animation-delay:${Math.random() * -25}s;opacity:${Math.random() * 0.45 + 0.08};`;
-      ptCont.appendChild(p);
-    }
-
-    // ── DIAGONAL LINES ──────────────────────────────
-    const lCont = document.getElementById('h-lines') as HTMLElement;
-    for (let i = 0; i < 6; i++) {
-      const l = document.createElement('div');
-      l.className = 'h-line';
-      l.style.cssText = `top:${15 + i * 13}%;width:${220 + Math.random() * 280}px;animation-duration:${7 + Math.random() * 7}s;animation-delay:${Math.random() * -14}s;`;
-      lCont.appendChild(l);
-    }
 
     // ── SCROLL REVEAL ────────────────────────────────
     const rvObs = new IntersectionObserver(entries => {
@@ -97,23 +177,25 @@ export default function LandingPage() {
       });
     };
     const heroEl = document.getElementById('hero') as HTMLElement;
-    const statsObs = new IntersectionObserver(es => { if (es[0].isIntersecting) runCounters(); }, { threshold: 0.5 });
+    const statsObs = new IntersectionObserver(es => { if (es[0].isIntersecting) runCounters(); }, { threshold: 0.1 });
     statsObs.observe(heroEl);
-    const statsTimer = setTimeout(runCounters, 1200);
+    const statsTimer = setTimeout(runCounters, 100);
 
     // ── FLEET 3D TILT ─────────────────────────────────
     const fleetHandlers: Handler[] = [];
     document.querySelectorAll('.fleet-card').forEach(card => {
-      const glow = card.querySelector('.fleet-tilt-glow') as HTMLElement;
+      const glow = card.querySelector('.fleet-tilt-glow') as HTMLElement | null;
       const mm: EventListener = (e) => {
         const me = e as MouseEvent;
         const r = card.getBoundingClientRect();
-        const x = (me.clientX - r.left) / r.width  - 0.5;
-        const y = (me.clientY - r.top)  / r.height - 0.5;
+        const x = (me.clientX - r.left) / r.width - 0.5;
+        const y = (me.clientY - r.top) / r.height - 0.5;
         (card as HTMLElement).style.transform = `perspective(700px) rotateY(${x * 9}deg) rotateX(${-y * 9}deg) scale(1.025)`;
         (card as HTMLElement).style.transition = 'transform 0.08s ease';
-        glow.style.setProperty('--mx', ((me.clientX - r.left) / r.width * 100) + '%');
-        glow.style.setProperty('--my', ((me.clientY - r.top)  / r.height * 100) + '%');
+        if (glow) {
+          glow.style.setProperty('--mx', ((me.clientX - r.left) / r.width * 100) + '%');
+          glow.style.setProperty('--my', ((me.clientY - r.top) / r.height * 100) + '%');
+        }
       };
       const ml: EventListener = () => {
         (card as HTMLElement).style.transform = 'none';
@@ -124,32 +206,55 @@ export default function LandingPage() {
       fleetHandlers.push({ el: card, mm, ml });
     });
 
-    // ── HERO PARALLAX ─────────────────────────────────
-    const hContent = document.querySelector('.h-content') as HTMLElement;
-    const onParallax = () => {
-      const y = window.scrollY;
-      if (y < window.innerHeight) {
-        hContent.style.transform = `translateY(${y * 0.28}px)`;
-        hContent.style.opacity = String(Math.max(0, 1 - y / 580));
+    // ── TESTIMONIALS SLIDER ───────────────────────────
+    const track = document.getElementById('test-track');
+    const dotsContainer = document.getElementById('test-dots');
+    let current = 0;
+    let autoPlay: ReturnType<typeof setInterval> | null = null;
+
+    if (track && dotsContainer) {
+      const cards = track.querySelectorAll('.test-card');
+      const total = cards.length;
+
+      const goTo = (i: number) => {
+        current = (i + total) % total;
+        (track as HTMLElement).style.transform = `translateX(-${current * 100}%)`;
+        dotsContainer.querySelectorAll('.test-dot').forEach((d, idx) => {
+          d.classList.toggle('active', idx === current);
+        });
+      };
+
+      for (let i = 0; i < total; i++) {
+        const dotEl = document.createElement('button');
+        dotEl.className = 'test-dot' + (i === 0 ? ' active' : '');
+        dotEl.setAttribute('aria-label', `Testimonio ${i + 1}`);
+        const idx = i;
+        dotEl.addEventListener('click', () => { goTo(idx); resetAuto(); });
+        dotsContainer.appendChild(dotEl);
       }
-    };
-    window.addEventListener('scroll', onParallax, { passive: true });
+
+      const resetAuto = () => {
+        if (autoPlay) clearInterval(autoPlay);
+        autoPlay = setInterval(() => goTo(current + 1), 4500);
+      };
+      resetAuto();
+    }
 
     // ── CLEANUP ──────────────────────────────────────
     return () => {
+      document.removeEventListener('keydown', onKey);
       cancelAnimationFrame(rafId);
       clearTimeout(statsTimer);
+      if (autoPlay) clearInterval(autoPlay);
       document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseover', addHov);
+      document.removeEventListener('mouseout', remHov);
       window.removeEventListener('scroll', onNavScroll);
-      window.removeEventListener('scroll', onParallax);
-      hoverTargets.forEach(el => { el.removeEventListener('mouseenter', addHov); el.removeEventListener('mouseleave', remHov); });
       magHandlers.forEach(({ el, mm, ml }) => { el.removeEventListener('mousemove', mm); el.removeEventListener('mouseleave', ml); });
       fleetHandlers.forEach(({ el, mm, ml }) => { el.removeEventListener('mousemove', mm); el.removeEventListener('mouseleave', ml); });
       rvObs.disconnect();
       statsObs.disconnect();
       document.body.classList.remove('hov');
-      if (ptCont) ptCont.innerHTML = '';
-      if (lCont) lCont.innerHTML = '';
     };
   }, []);
 
@@ -158,7 +263,15 @@ export default function LandingPage() {
       <div id="c-dot"></div>
       <div id="c-ring"></div>
 
-      {/* NAVBAR */}
+      {/* ── ADMIN BAR ── */}
+      {adminMode && (
+        <div className="admin-bar">
+          <span>⚙ MODO ADMIN — Haz clic en cualquier imagen para subirla</span>
+          <button className="admin-bar-close" onClick={() => setAdminMode(false)}>✕ Salir</button>
+        </div>
+      )}
+
+      {/* ── NAVBAR ── */}
       <nav id="nav">
         <a href="#" className="nav-logo">
           <span className="logo-diamond"></span>
@@ -170,130 +283,254 @@ export default function LandingPage() {
         <ul className="nav-links">
           <li><a href="#services">Servicios</a></li>
           <li><a href="#fleet">Flota</a></li>
-          <li><a href="#features">Nosotros</a></li>
-          <li><a href="#booking">Contacto</a></li>
+          <li><a href="#why-us">Nosotros</a></li>
+          <li><a href="#booking-strip">Contacto</a></li>
         </ul>
-        <a href="#booking" className="nav-cta">Reservar ahora</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {!adminMode && (
+            <button className="admin-toggle-btn" onClick={() => setAdminMode(true)} title="Modo Admin (Ctrl+Shift+A)">
+              ⚙
+            </button>
+          )}
+          <a href="#booking-strip" className="nav-cta magnetic">Reservar ahora</a>
+        </div>
       </nav>
 
-      {/* HERO */}
-      <section id="hero">
-        <div className="h-grid"></div>
-        <div className="h-glow h-glow-1"></div>
-        <div className="h-glow h-glow-2"></div>
-        <div id="particles"></div>
-        <div id="h-lines"></div>
-
-        <div className="h-content">
-          <div className="h-badge">Tour &amp; Transfer · Servicio de Élite</div>
-          <h1 className="h-title">
-            <span className="t1">VIAJA</span>
-            <span className="t2">SIN</span>
-            <span className="t3">LÍMITES</span>
-          </h1>
-          <p className="h-sub">
-            Transporte privado de <strong>primera clase</strong> para ejecutivos, eventos y traslados
-            aeroportuarios. Puntualidad, confort y discreción garantizados.
-          </p>
-          <div className="h-btns">
-            <a href="#booking" className="btn-p magnetic"><span>Solicitar servicio</span></a>
-            <a href="#fleet" className="btn-s magnetic">Ver flota</a>
-          </div>
-        </div>
-
-        <div className="h-visual">
-          <div className="h-frame">
-            <span className="fc tl"></span><span className="fc tr"></span>
-            <span className="fc bl"></span><span className="fc br"></span>
-            <div className="ph-icon">
-              <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14l4 4v6a2 2 0 0 1-2 2h-2"/><circle cx="8" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></svg>
+      {/* ── HERO ── */}
+      <section id="hero" className="has-bg">
+        {/* Background image */}
+        <div
+          className={`hero-bg${adminMode ? ' img-clickable' : ''}`}
+          onClick={adminMode ? () => upload('heroBg') : undefined}
+        >
+          <img src={imgs.heroBg || heroBgImg} alt="" className="uploaded-img" />
+          <div className="hero-bg-overlay"></div>
+          {adminMode && (
+            <div className="upload-overlay">
+              <span className="uov-icon">📷</span>
+              <span className="uov-text">{imgs.heroBg ? 'Cambiar fondo' : 'Subir fondo 16:9'}</span>
+              {imgs.heroBg && (
+                <button className="uov-del" onClick={e => deleteImg('heroBg', e)}>✕ Eliminar</button>
+              )}
             </div>
-            <span className="ph-label">Imagen Principal</span>
-            <span className="ph-sub">Vehículo o escena corporativa</span>
-          </div>
+          )}
         </div>
+        <div className="hero-inner wrap">
 
-        <div className="h-stats">
-          <div className="stat-item">
-            <div className="stat-n"><span className="cnt" data-to="8">0</span><em>+</em></div>
-            <div className="stat-l">Años de experiencia</div>
+          {/* Left column */}
+          <div className="hero-left">
+            <div className="h-badge">Tour &amp; Transfer · Servicio de Élite</div>
+            <h1 className="h-title">
+              Viaja con<br />
+              <em>elegancia</em><br />
+              y confort
+            </h1>
+            <p className="h-sub">
+              Transporte privado de primera clase para ejecutivos, eventos y traslados aeroportuarios.
+              Puntualidad, confort y discreción garantizados.
+            </p>
+            <div className="h-btns">
+              <a href="#booking-strip" className="btn-p magnetic"><span>Reservar ahora</span></a>
+              <a href="#fleet" className="btn-s magnetic">Ver flota</a>
+            </div>
+            <div className="h-stats">
+              <div className="stat-item">
+                <div className="stat-n"><span className="cnt" data-to="8">0</span><em>+</em></div>
+                <div className="stat-l">Años de experiencia</div>
+              </div>
+              <div className="stat-div"></div>
+              <div className="stat-item">
+                <div className="stat-n"><span className="cnt" data-to="1200">0</span><em>+</em></div>
+                <div className="stat-l">Viajes completados</div>
+              </div>
+              <div className="stat-div"></div>
+              <div className="stat-item">
+                <div className="stat-n"><span className="cnt" data-to="98">0</span><em>%</em></div>
+                <div className="stat-l">Satisfacción</div>
+              </div>
+            </div>
           </div>
-          <div className="stat-div"></div>
-          <div className="stat-item">
-            <div className="stat-n"><span className="cnt" data-to="1200">0</span><em>+</em></div>
-            <div className="stat-l">Viajes completados</div>
-          </div>
-          <div className="stat-div"></div>
-          <div className="stat-item">
-            <div className="stat-n"><span className="cnt" data-to="98">0</span><em>%</em></div>
-            <div className="stat-l">Satisfacción del cliente</div>
-          </div>
-        </div>
 
-        <div className="scroll-cue">
-          <span className="sc-txt">Scroll</span>
-          <div className="sc-line"></div>
+          {/* Right column */}
+          <div className="hero-right">
+            <div className="hero-img-wrap">
+              {imgSlot('hero',
+                <>
+                  <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14l4 4v6a2 2 0 0 1-2 2h-2" /><circle cx="8" cy="17" r="2" /><circle cx="18" cy="17" r="2" /></svg>
+                  <span>Imagen principal</span>
+                  <span className="ph-sub">Vehículo o escena premium</span>
+                </>,
+                'hero-img-ph'
+              )}
+              <div className="hero-float-card">
+                <div className="hfc-stars">★★★★★</div>
+                <div className="hfc-text">"Servicio excepcional, puntuales y muy profesionales"</div>
+                <div className="hfc-name">— Carlos M., Cliente VIP</div>
+              </div>
+              <div className="hero-badge-float">
+                <div className="hbf-icon">🏆</div>
+                <div>
+                  <div className="hbf-val">Top rated</div>
+                  <div className="hbf-desc">Servicio premium</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
-      {/* SERVICES */}
+      {/* ── BOOKING STRIP ── */}
+      <section id="booking-strip">
+        <div className="bs-inner wrap">
+          <span className="bs-label">Reserva tu viaje</span>
+          <form className="bs-form" onSubmit={e => e.preventDefault()}>
+            <div className="bs-field">
+              <label>Origen</label>
+              <input type="text" placeholder="Ciudad o aeropuerto" />
+            </div>
+            <div className="bs-sep">→</div>
+            <div className="bs-field">
+              <label>Destino</label>
+              <input type="text" placeholder="Ciudad o aeropuerto" />
+            </div>
+            <div className="bs-field">
+              <label>Fecha</label>
+              <input type="date" />
+            </div>
+            <div className="bs-field">
+              <label>Pasajeros</label>
+              <select>
+                <option>1 pasajero</option>
+                <option>2 pasajeros</option>
+                <option>3–6 pasajeros</option>
+                <option>7–12 pasajeros</option>
+              </select>
+            </div>
+            <div className="bs-field">
+              <label>Servicio</label>
+              <select>
+                <option>Aeroportuario</option>
+                <option>Corporativo</option>
+                <option>Tour / Excursión</option>
+                <option>Evento especial</option>
+              </select>
+            </div>
+            <button type="submit" className="bs-btn magnetic"><span>Cotizar →</span></button>
+          </form>
+        </div>
+      </section>
+
+      {/* ── SERVICES ── */}
       <section id="services" className="sec">
         <div className="wrap">
-          <div className="svc-head rv">
+          <div className="sec-head rv">
             <div className="sec-tag">Lo que hacemos</div>
-            <h2 className="sec-h">Servicios<br />de élite</h2>
+            <h2 className="sec-h">Nuestros servicios<br />de élite</h2>
             <p className="sec-p">Cada servicio diseñado para superar expectativas con tecnología, profesionalismo y atención al detalle.</p>
           </div>
           <div className="svc-grid">
             <div className="svc-card rv d1">
-              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
-              <div className="svc-name">Traslados Aeroportuarios</div>
-              <p className="svc-desc">Recogida y entrega puntual en todos los aeropuertos. Monitoreo de vuelos en tiempo real para garantizar tu llegada a tiempo, siempre.</p>
-              <span className="svc-arr">→</span>
+              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg></div>
+              <h3 className="svc-name">Traslados Aeroportuarios</h3>
+              <p className="svc-desc">Recogida y entrega puntual en todos los aeropuertos. Monitoreo de vuelos en tiempo real para garantizar tu llegada siempre a tiempo.</p>
+              <a href="#booking-strip" className="svc-link">Reservar →</a>
             </div>
             <div className="svc-card rv d2">
-              <div className="svc-ico"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div>
-              <div className="svc-name">Transporte Corporativo</div>
+              <div className="svc-ico"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /><line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" /></svg></div>
+              <h3 className="svc-name">Transporte Corporativo</h3>
               <p className="svc-desc">Servicio discreto y profesional para ejecutivos y equipos. Flota premium con WiFi, temperatura controlada y conectividad total.</p>
-              <span className="svc-arr">→</span>
+              <a href="#booking-strip" className="svc-link">Reservar →</a>
             </div>
             <div className="svc-card rv d3">
-              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-              <div className="svc-name">Tours y Excursiones</div>
+              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" /><circle cx="12" cy="10" r="3" /></svg></div>
+              <h3 className="svc-name">Tours y Excursiones</h3>
               <p className="svc-desc">Descubre los mejores destinos con chóferes expertos. Rutas personalizadas para experiencias únicas e inolvidables.</p>
-              <span className="svc-arr">→</span>
-            </div>
-            <div className="svc-card rv d4">
-              <div className="svc-ico"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-              <div className="svc-name">Eventos Especiales</div>
-              <p className="svc-desc">Bodas, galas y eventos VIP con vehículos de lujo y coordinación logística impecable para grupos de cualquier tamaño.</p>
-              <span className="svc-arr">→</span>
+              <a href="#booking-strip" className="svc-link">Reservar →</a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FLEET */}
+      {/* ── WHY US ── */}
+      <section id="why-us" className="sec">
+        <div className="wrap">
+          <div className="why-layout">
+            <div className="why-visual rv">
+              {imgSlot('whyUs',
+                <>
+                  <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                  <span>Imagen institucional</span>
+                  <span className="ph-sub">Interior de vehículo o equipo</span>
+                </>,
+                'why-img-ph'
+              )}
+              <div className="why-badge">
+                <div className="wb-icon">⚡</div>
+                <div>
+                  <div className="wb-val">24/7</div>
+                  <div className="wb-desc">Disponibilidad total</div>
+                </div>
+              </div>
+            </div>
+            <div className="why-content rv d2">
+              <div className="sec-tag">Por qué elegirnos</div>
+              <h2 className="sec-h">Excelencia en cada kilómetro</h2>
+              <p className="sec-p">Más de 8 años ofreciendo el mejor servicio de transporte privado, con conductores certificados y vehículos de primer nivel.</p>
+              <ul className="why-list">
+                <li className="why-item">
+                  <span className="wi-check">✓</span>
+                  <div>
+                    <div className="wi-title">Puntualidad garantizada</div>
+                    <p className="wi-desc">Monitoreamos el tráfico en tiempo real y planificamos cada ruta para asegurar tu llegada siempre a tiempo.</p>
+                  </div>
+                </li>
+                <li className="why-item">
+                  <span className="wi-check">✓</span>
+                  <div>
+                    <div className="wi-title">Conductores profesionales</div>
+                    <p className="wi-desc">Equipo certificado con protocolo ejecutivo, idiomas y manejo defensivo. Discreción absoluta garantizada.</p>
+                  </div>
+                </li>
+                <li className="why-item">
+                  <span className="wi-check">✓</span>
+                  <div>
+                    <div className="wi-title">Confort y tecnología</div>
+                    <p className="wi-desc">WiFi a bordo, agua mineral, climatización individual y seguimiento en vivo desde cualquier dispositivo.</p>
+                  </div>
+                </li>
+                <li className="why-item">
+                  <span className="wi-check">✓</span>
+                  <div>
+                    <div className="wi-title">Disponibilidad 24/7</div>
+                    <p className="wi-desc">Atendemos tu solicitud en cualquier hora del día o la noche, los 365 días del año.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FLEET ── */}
       <section id="fleet" className="sec">
         <div className="wrap">
-          <div className="fleet-top rv">
+          <div className="fleet-head rv">
             <div>
               <div className="sec-tag">Nuestra flota</div>
               <h2 className="sec-h">Vehículos de<br />primer nivel</h2>
             </div>
-            <p className="sec-p">Selecciona el vehículo ideal para cada ocasión. Todos con mantenimiento certificado y equipamiento premium.</p>
+            <p className="sec-p fleet-head-p">Selecciona el vehículo ideal para cada ocasión. Todos con mantenimiento certificado y equipamiento premium.</p>
           </div>
           <div className="fleet-grid">
             <div className="fleet-card rv d1">
-              <div className="fleet-ph">
-                <div className="fleet-tilt-glow"></div>
-                <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                <span className="ph-label">Imagen del vehículo</span>
-                <span className="ph-sub">Sedan ejecutivo</span>
-              </div>
+              {fleetSlot('fleet1',
+                <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>,
+                'Imagen del vehículo', 'Sedan ejecutivo'
+              )}
               <div className="fleet-hover-info">
                 <span className="fhi-name">Sedan Ejecutivo</span>
-                <span className="fhi-type">Viajes corporativos · Aeropuerto</span>
+                <span className="fhi-type">Corporativo · Aeropuerto</span>
               </div>
               <div className="fleet-info">
                 <span className="fi-name">Sedan Premium</span>
@@ -301,15 +538,13 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="fleet-card rv d2">
-              <div className="fleet-ph">
-                <div className="fleet-tilt-glow"></div>
-                <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14l4 4v6a2 2 0 0 1-2 2h-2"/><circle cx="8" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></svg>
-                <span className="ph-label">Imagen del vehículo</span>
-                <span className="ph-sub">SUV de lujo</span>
-              </div>
+              {fleetSlot('fleet2',
+                <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h14l4 4v6a2 2 0 0 1-2 2h-2" /><circle cx="8" cy="17" r="2" /><circle cx="18" cy="17" r="2" /></svg>,
+                'Imagen del vehículo', 'SUV de lujo'
+              )}
               <div className="fleet-hover-info">
                 <span className="fhi-name">SUV de Lujo</span>
-                <span className="fhi-type">Grupos pequeños · Todo terreno</span>
+                <span className="fhi-type">Grupos · Todo terreno</span>
               </div>
               <div className="fleet-info">
                 <span className="fi-name">SUV Premium</span>
@@ -317,12 +552,10 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="fleet-card rv d3">
-              <div className="fleet-ph">
-                <div className="fleet-tilt-glow"></div>
-                <svg viewBox="0 0 24 24"><rect x="1" y="3" width="18" height="13" rx="2"/><path d="M19 8h2a2 2 0 0 1 2 2v5H19V8z"/><circle cx="6" cy="18.5" r="2.5"/><circle cx="16" cy="18.5" r="2.5"/></svg>
-                <span className="ph-label">Imagen del vehículo</span>
-                <span className="ph-sub">Van ejecutiva</span>
-              </div>
+              {fleetSlot('fleet3',
+                <svg viewBox="0 0 24 24"><rect x="1" y="3" width="18" height="13" rx="2" /><path d="M19 8h2a2 2 0 0 1 2 2v5H19V8z" /><circle cx="6" cy="18.5" r="2.5" /><circle cx="16" cy="18.5" r="2.5" /></svg>,
+                'Imagen del vehículo', 'Van ejecutiva'
+              )}
               <div className="fleet-hover-info">
                 <span className="fhi-name">Van Ejecutiva</span>
                 <span className="fhi-type">Grupos · Eventos · Tours</span>
@@ -336,153 +569,72 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section id="features" className="sec">
+      {/* ── TESTIMONIALS ── */}
+      <section id="testimonials">
         <div className="wrap">
-          <div className="feat-layout">
-            <div className="feat-visual rv">
-              <div className="feat-frame">
-                <span className="fc tl"></span><span className="fc tr"></span>
-                <span className="fc bl"></span><span className="fc br"></span>
-                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span className="ph-label">Imagen institucional</span>
-                <span className="ph-sub">Interior de vehículo o equipo</span>
+          <div className="test-head rv">
+            <div className="sec-tag sec-tag-inv">Lo que dicen nuestros clientes</div>
+            <h2 className="sec-h sec-h-inv">Experiencias que hablan</h2>
+          </div>
+          <div className="test-slider-wrap">
+            <div className="test-track" id="test-track">
+              <div className="test-card">
+                <div className="test-card-inner">
+                  <div className="tc-stars">★★★★★</div>
+                  <p className="tc-text">"El mejor servicio de transporte que he usado. Puntualidad perfecta, vehículo impecable y chofer muy profesional. Lo recomiendo al 100%."</p>
+                  <div className="tc-author">
+                    <div className="tc-avatar">CM</div>
+                    <div>
+                      <div className="tc-name">Carlos Martínez</div>
+                      <div className="tc-role">Director Ejecutivo</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="f-badge b1">
-                <div className="fb-icon">⚡</div>
-                <div><div className="fb-val">24/7</div><div className="fb-desc">Disponibilidad total</div></div>
+              <div className="test-card">
+                <div className="test-card-inner">
+                  <div className="tc-stars">★★★★★</div>
+                  <p className="tc-text">"Utilicé el servicio para subir al techo de mi casa y choco, caí del decimoquinto piso, quede en perfecto estado."</p>
+                  <div className="tc-author">
+                    <div className="tc-avatar">ML</div>
+                    <div>
+                      <div className="tc-name">Matheus de Lara</div>
+                      <div className="tc-role">Cliente VIP</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="f-badge b2">
-                <div className="fb-icon">🛡</div>
-                <div><div className="fb-val">100%</div><div className="fb-desc">Conductores certificados</div></div>
+              <div className="test-card">
+                <div className="test-card-inner">
+                  <div className="tc-stars">★★★★★</div>
+                  <p className="tc-text">"Transporte corporativo de primer nivel. Usamos TransKartz para todos nuestros ejecutivos visitantes. Confiable, discreto y profesional siempre."</p>
+                  <div className="tc-author">
+                    <div className="tc-avatar">MR</div>
+                    <div>
+                      <div className="tc-name">Miguel Rodríguez</div>
+                      <div className="tc-role">Gerente General, TechCorp</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="feat-list rv d2">
-              <div className="sec-tag">Por qué elegirnos</div>
-              <h2 className="sec-h">Excelencia en cada kilómetro</h2>
-              <div className="feat-sep"></div>
-              <div className="feat-item">
-                <span className="feat-num">01</span>
-                <div>
-                  <div className="feat-title">Puntualidad garantizada</div>
-                  <p className="feat-desc">Monitoreamos el tráfico en tiempo real y planificamos cada ruta con precisión milimétrica para asegurar tu llegada a tiempo, siempre.</p>
-                </div>
-              </div>
-              <div className="feat-sep"></div>
-              <div className="feat-item">
-                <span className="feat-num">02</span>
-                <div>
-                  <div className="feat-title">Conductores profesionales</div>
-                  <p className="feat-desc">Equipo certificado con experiencia en protocolo ejecutivo, idiomas y manejo defensivo. Discreción absoluta garantizada.</p>
-                </div>
-              </div>
-              <div className="feat-sep"></div>
-              <div className="feat-item">
-                <span className="feat-num">03</span>
-                <div>
-                  <div className="feat-title">Confort y tecnología</div>
-                  <p className="feat-desc">Vehículos con interiores premium, WiFi, agua mineral, climatización individual y asistente de ruta en tiempo real.</p>
-                </div>
-              </div>
-              <div className="feat-sep"></div>
-              <div className="feat-item">
-                <span className="feat-num">04</span>
-                <div>
-                  <div className="feat-title">Seguimiento en vivo</div>
-                  <p className="feat-desc">Accede al estado de tu servicio desde cualquier dispositivo. Comunicación directa con tu conductor durante todo el trayecto.</p>
-                </div>
-              </div>
-              <div className="feat-sep"></div>
-            </div>
+            <div className="test-dots" id="test-dots"></div>
           </div>
         </div>
       </section>
 
-      {/* BOOKING */}
-      <section id="booking" className="sec">
-        <div className="wrap">
-          <div className="book-layout">
-            <div className="book-info rv">
-              <div>
-                <div className="sec-tag">Reservas</div>
-                <h2 className="sec-h">Solicita tu<br />servicio hoy</h2>
-                <p className="sec-p">Completa el formulario y nos comunicamos en menos de 2 horas para confirmar tu reserva.</p>
-              </div>
-              <div className="book-contacts">
-                <div className="con-item">
-                  <div className="con-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg></div>
-                  <div><div className="con-lbl">Teléfono</div><div className="con-val">+1 (555) 000-0000</div></div>
-                </div>
-                <div className="con-item">
-                  <div className="con-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
-                  <div><div className="con-lbl">Email</div><div className="con-val">contacto@transkartz.com</div></div>
-                </div>
-                <div className="con-item">
-                  <div className="con-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-                  <div><div className="con-lbl">Disponibilidad</div><div className="con-val">24 horas · 7 días</div></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rv d2">
-              <form className="book-form" onSubmit={e => e.preventDefault()}>
-                <div className="f-row">
-                  <div className="f-group">
-                    <label className="f-lbl" htmlFor="nombre">Nombre</label>
-                    <input id="nombre" className="f-inp" type="text" placeholder="Tu nombre completo" />
-                  </div>
-                  <div className="f-group">
-                    <label className="f-lbl" htmlFor="telefono">Teléfono</label>
-                    <input id="telefono" className="f-inp" type="tel" placeholder="+1 555 000 000" />
-                  </div>
-                </div>
-                <div className="f-group">
-                  <label className="f-lbl" htmlFor="email">Email</label>
-                  <input id="email" className="f-inp" type="email" placeholder="tu@email.com" />
-                </div>
-                <div className="f-row">
-                  <div className="f-group">
-                    <label className="f-lbl" htmlFor="servicio">Tipo de servicio</label>
-                    <select id="servicio" className="f-sel f-inp">
-                      <option value="">Seleccionar...</option>
-                      <option>Traslado aeroportuario</option>
-                      <option>Corporativo</option>
-                      <option>Evento especial</option>
-                      <option>Tour / Excursión</option>
-                    </select>
-                  </div>
-                  <div className="f-group">
-                    <label className="f-lbl" htmlFor="vehiculo">Vehículo</label>
-                    <select id="vehiculo" className="f-sel f-inp">
-                      <option value="">Seleccionar...</option>
-                      <option>Sedan Ejecutivo</option>
-                      <option>SUV Premium</option>
-                      <option>Van de Lujo</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="f-row">
-                  <div className="f-group">
-                    <label className="f-lbl" htmlFor="fecha">Fecha</label>
-                    <input id="fecha" className="f-inp" type="date" />
-                  </div>
-                  <div className="f-group">
-                    <label className="f-lbl" htmlFor="pasajeros">Pasajeros</label>
-                    <input id="pasajeros" className="f-inp" type="number" placeholder="Nº pasajeros" min={1} max={50} />
-                  </div>
-                </div>
-                <div className="f-group">
-                  <label className="f-lbl" htmlFor="detalles">Detalles adicionales</label>
-                  <input id="detalles" className="f-inp" type="text" placeholder="Origen, destino, observaciones..." />
-                </div>
-                <button className="f-btn magnetic" type="submit"><span>Enviar solicitud</span></button>
-              </form>
-            </div>
+      {/* ── CTA ── */}
+      <section id="cta">
+        <div className="wrap cta-inner">
+          <div className="cta-text rv">
+            <h2 className="sec-h sec-h-inv">¿Listo para tu próximo viaje?</h2>
+            <p className="sec-p">Contáctanos ahora y recibe una cotización en menos de 2 horas.</p>
           </div>
+          <a href="#booking-strip" className="btn-p-inv magnetic rv d2"><span>Solicitar cotización</span></a>
         </div>
       </section>
 
-      {/* FOOTER */}
+      {/* ── FOOTER ── */}
       <footer>
         <div className="wrap">
           <div className="foot-grid">
@@ -513,11 +665,12 @@ export default function LandingPage() {
               </ul>
             </div>
             <div className="foot-col">
-              <h4>Legal</h4>
+              <h4>Contacto</h4>
               <ul>
-                <li><a href="#">Privacidad</a></li>
-                <li><a href="#">Términos de uso</a></li>
-                <li><a href="#">Cookies</a></li>
+                <li><a href="#">+1 (555) 000-0000</a></li>
+                <li><a href="#">contacto@transkartz.com</a></li>
+                <li><a href="#">WhatsApp</a></li>
+                <li><a href="#">24h · 7 días</a></li>
               </ul>
             </div>
           </div>
