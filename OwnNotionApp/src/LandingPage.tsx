@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
 import './LandingPage.css';
 import heroBgImg from './assets/bgf2.jpg';
+import imgHeroRight from './assets/images/Hero.jpg';
+import imgPortrait from './assets/images/portrail.jpg';
+import imgSedan from './assets/images/sedan.jpg';
+import imgSUV from './assets/images/SUV.jpg';
+import imgVAN from './assets/images/VAN.jpg';
+
+const DEFAULT_IMGS: Record<string, string> = {
+  hero:    imgHeroRight,
+  heroBg:  heroBgImg,
+  whyUs:   imgPortrait,
+  fleet1:  imgSedan,
+  fleet2:  imgSUV,
+  fleet3:  imgVAN,
+};
 
 const IMG_KEYS = ['hero', 'heroBg', 'whyUs', 'fleet1', 'fleet2', 'fleet3'] as const;
 type ImgKey = typeof IMG_KEYS[number];
@@ -65,47 +79,53 @@ export default function LandingPage() {
   };
 
   // Generic image slot: renders placeholder or uploaded image + admin overlay
-  const imgSlot = (key: ImgKey, placeholder: React.ReactNode, cls: string) => (
-    <div
-      className={`${cls}${adminMode ? ' img-clickable' : ''}`}
-      onClick={adminMode ? () => upload(key) : undefined}
-    >
-      {imgs[key]
-        ? <img src={imgs[key]} alt="" className="uploaded-img" />
-        : placeholder}
-      {adminMode && (
-        <div className="upload-overlay">
-          <span className="uov-icon">📷</span>
-          <span className="uov-text">{imgs[key] ? 'Cambiar imagen' : 'Subir imagen'}</span>
-          {imgs[key] && (
-            <button className="uov-del" onClick={e => deleteImg(key, e)}>✕ Eliminar</button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  const imgSlot = (key: ImgKey, placeholder: React.ReactNode, cls: string) => {
+    const src = imgs[key] || DEFAULT_IMGS[key] || '';
+    return (
+      <div
+        className={`${cls}${adminMode ? ' img-clickable' : ''}`}
+        onClick={adminMode ? () => upload(key) : undefined}
+      >
+        {src
+          ? <img src={src} alt="" className="uploaded-img" />
+          : placeholder}
+        {adminMode && (
+          <div className="upload-overlay">
+            <span className="uov-icon">📷</span>
+            <span className="uov-text">{imgs[key] ? 'Cambiar imagen' : 'Subir imagen'}</span>
+            {imgs[key] && (
+              <button className="uov-del" onClick={e => deleteImg(key, e)}>✕ Eliminar</button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Fleet-ph slot: keeps tilt-glow always visible on top of image
-  const fleetSlot = (key: ImgKey, svg: React.ReactNode, label: string, sub: string) => (
-    <div
-      className={`fleet-ph${adminMode ? ' img-clickable' : ''}`}
-      onClick={adminMode ? () => upload(key) : undefined}
-    >
-      <div className="fleet-tilt-glow"></div>
-      {imgs[key]
-        ? <img src={imgs[key]} alt={label} className="uploaded-img" />
-        : <>{svg}<span className="ph-label">{label}</span><span className="ph-sub">{sub}</span></>}
-      {adminMode && (
-        <div className="upload-overlay">
-          <span className="uov-icon">📷</span>
-          <span className="uov-text">{imgs[key] ? 'Cambiar' : 'Subir imagen'}</span>
-          {imgs[key] && (
-            <button className="uov-del" onClick={e => deleteImg(key, e)}>✕ Eliminar</button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  const fleetSlot = (key: ImgKey, svg: React.ReactNode, label: string, sub: string) => {
+    const src = imgs[key] || DEFAULT_IMGS[key] || '';
+    return (
+      <div
+        className={`fleet-ph${adminMode ? ' img-clickable' : ''}`}
+        onClick={adminMode ? () => upload(key) : undefined}
+      >
+        <div className="fleet-tilt-glow"></div>
+        {src
+          ? <img src={src} alt={label} className="uploaded-img" />
+          : <>{svg}<span className="ph-label">{label}</span><span className="ph-sub">{sub}</span></>}
+        {adminMode && (
+          <div className="upload-overlay">
+            <span className="uov-icon">📷</span>
+            <span className="uov-text">{imgs[key] ? 'Cambiar' : 'Subir imagen'}</span>
+            {imgs[key] && (
+              <button className="uov-del" onClick={e => deleteImg(key, e)}>✕ Eliminar</button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   useEffect(() => {
     // ── ADMIN KEYBOARD SHORTCUT ──────────────────────
