@@ -15,6 +15,24 @@ export default function LandingPage() {
   const [adminMode, setAdminMode] = useState(false);
   const [imgs, setImgs] = useState<Record<ImgKey, string>>(loadImgs);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+
+  const requestAdmin = () => {
+    setPasswordInput('');
+    setPasswordError(false);
+    setShowPasswordModal(true);
+  };
+
+  const submitPassword = () => {
+    if (passwordInput === 'questweb2026') {
+      setShowPasswordModal(false);
+      setAdminMode(true);
+    } else {
+      setPasswordError(true);
+    }
+  };
 
   // Sync body class
   useEffect(() => {
@@ -94,7 +112,11 @@ export default function LandingPage() {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
         e.preventDefault();
-        setAdminMode(prev => !prev);
+        if (document.body.classList.contains('admin-mode')) {
+          setAdminMode(false);
+        } else {
+          requestAdmin();
+        }
       }
     };
     document.addEventListener('keydown', onKey);
@@ -286,6 +308,31 @@ export default function LandingPage() {
         </div>
       )}
 
+      {/* ── PASSWORD MODAL ── */}
+      {showPasswordModal && (
+        <div className="pw-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowPasswordModal(false); }}>
+          <div className="pw-modal">
+            <div className="pw-icon">⚙</div>
+            <h3 className="pw-title">Modo Administrador</h3>
+            <p className="pw-sub">Ingresa la contraseña para editar imágenes</p>
+            <input
+              className={`pw-input${passwordError ? ' pw-input-error' : ''}`}
+              type="password"
+              placeholder="Contraseña"
+              value={passwordInput}
+              onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
+              onKeyDown={e => e.key === 'Enter' && submitPassword()}
+              autoFocus
+            />
+            {passwordError && <p className="pw-error">Contraseña incorrecta</p>}
+            <div className="pw-btns">
+              <button className="pw-btn-cancel" onClick={() => setShowPasswordModal(false)}>Cancelar</button>
+              <button className="pw-btn-ok" onClick={submitPassword}>Entrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── NAVBAR ── */}
       <nav id="nav">
         <a href="#" className="nav-logo">
@@ -303,7 +350,7 @@ export default function LandingPage() {
         </ul>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {!adminMode && (
-            <button className="admin-toggle-btn" onClick={() => setAdminMode(true)} title="Modo Admin (Ctrl+Shift+A)">
+            <button className="admin-toggle-btn" onClick={requestAdmin} title="Modo Admin (Ctrl+Shift+A)">
               ⚙
             </button>
           )}
